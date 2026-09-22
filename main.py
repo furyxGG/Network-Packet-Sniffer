@@ -1,8 +1,6 @@
 import socket
 import struct
 
-s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3)) # we want to take packet from network adapter with headers
-
 class Packet:
 	def __init__(self):
 		self.protocol = None
@@ -86,11 +84,18 @@ class Packet:
 				return
 			self.payload = data[start:self.total_len + 14]
 
-while True:
-	packet = Packet()
-	data, addr = s.recvfrom(65535) # our max packet size
-	packet.get_ethernet_frame(data)
-	packet.get_ipv4_header(data)
-	packet.get_tcpudp_header(data)
-	packet.get_data(data)
-	del packet
+s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3)) # we want to take packet from network adapter with headers
+try:
+	while True:
+		packet = Packet()
+		data, addr = s.recvfrom(65535) # our max packet size
+		packet.get_ethernet_frame(data)
+		packet.get_ipv4_header(data)
+		packet.get_tcpudp_header(data)
+		packet.get_data(data)
+		del packet
+		# for hex style u have to use packet.payload.hex()
+		# and for some http data, u can see with packet.payload.decode("utf-8", errors="ignore")
+		# we don't use struct.unpack because we don't know what is the data. So we can already read them
+except KeyboardInterrupt:
+	print("Quitting...")
