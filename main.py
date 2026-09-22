@@ -55,7 +55,7 @@ class Packet:
 			self.dst_port = all_bytes[1]
 			self.seq_nbr = all_bytes[2]
 			self.ack_nbr = all_bytes[3]
-			self.header_len = all_bytes[4] >> 12
+			self.tcp_len = all_bytes[4] >> 12
 			self.reserved_bits = (all_bytes[4] >> 6) & 0x003F
 			self.urg = (all_bytes[4] >> 5) & 0x0001
 			self.ack = (all_bytes[4] >> 4) & 0x0001
@@ -76,7 +76,15 @@ class Packet:
 			self.udp_checksum = all_bytes[3]
 		else:
 			pass
-
+	def	get_data(self, data):
+		if self.type == 0x0800:
+			if self.protocol == 6:
+				start = (self.tcp_len * 4) + (self.ihl * 4) + 14 # if there are options section in ipv4 or tcp headers we should make this dynamic
+			elif self.protocol == 17:
+				start = (self.ihl * 4) + 22
+			else:
+				return
+			self.payload = data[start:self.total_len + 14]
 
 while True:
 	packet = Packet()
@@ -84,4 +92,5 @@ while True:
 	packet.get_ethernet_frame(data)
 	packet.get_ipv4_header(data)
 	packet.get_tcpudp_header(data)
+	packet.get_data(data)
 	del packet
